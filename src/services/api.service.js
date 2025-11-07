@@ -45,8 +45,15 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      return data;
+      // Handle empty responses or non-JSON responses
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      }
+      
+      // Return empty object for non-JSON responses
+      return {};
     } catch (error) {
       if (error.name === 'AbortError') {
         throw new Error('Request timeout');
@@ -110,7 +117,7 @@ class ApiService {
    */
   async checkConnection() {
     try {
-      const response = await fetch(this.baseURL.replace('/api', '/actuator/health'), {
+      const response = await fetch(config.HEALTH_CHECK_URL, {
         method: 'GET',
       });
       return response.ok;
